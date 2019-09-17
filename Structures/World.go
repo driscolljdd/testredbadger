@@ -1,11 +1,14 @@
 package Structures
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 	type world struct {
 
 		sizeX, sizeY int
-		scentPositions []position
+		scentPositions map[string]interface{}
 		robots []robot
 		currentRobot robot
 		moves movementMap
@@ -13,18 +16,20 @@ import "strings"
 
 	func (w *world) NewRobot(x, y int) {
 
-		// Do we have an existing robot?
-		if(w.currentRobot.moves > 0) {
+		// Save down the current robot
+		w.robots = append(w.robots, w.currentRobot)
 
-			// Save down the current robot
-			w.robots = append(w.robots, w.currentRobot)
-
-			// And fetch a new one
-			w.currentRobot = robot{ location:position{ X: x, Y: y} }
-		}
+		// And fetch a new one
+		w.currentRobot = robot{ location:position{ X: x, Y: y}, setup: true }
 	}
 
 	func (w *world) Instruction(command string) {
+
+		// If we're off the grid, just stop right here (or if we haven't yet set up a robot)
+		if(w.currentRobot.offGrid || !w.currentRobot.setup) {
+
+			return
+		}
 
 		// Uppercase the command
 		command = strings.ToUpper(command)
@@ -44,17 +49,45 @@ import "strings"
 			case "F":
 
 				// We have movement. Calculate where we're going to be next
-				newPositionX, validX := w.moves.movement[w.currentRobot.direction]["F"]["X"]
-				newPositionY, validY := w.moves.movement[w.currentRobot.direction]["F"]["Y"]
+				movementX, validX := w.moves.movement[w.currentRobot.direction]["F"]["X"]
+				movementY, validY := w.moves.movement[w.currentRobot.direction]["F"]["Y"]
 
+				// If the incoming instruction isn't in our movement map, stop here
 				if(!validX || !validY) {
 
 					return
 				}
 
-				// OK we have the new position we will move to, but does it take us outside the world?
-				
+				// Calculate our new positions
+				newPositionX := w.currentRobot.location.X + movementX
+				newPositionY := w.currentRobot.location.Y + movementY
 
+				// OK we have the new position we will move to, but does it take us outside the world?
+				if(newPositionX < 0 || newPositionY < 0 || newPositionX > w.sizeX || newPositionY > w.sizeY) {
+
+					// We're about to be off grid. One chance to save ourselves; has anyone else dropped off from here before, in which case we can just pretend this never happened...
+					_, safe := w.scentPositions[strconv.Itoa(w.currentRobot.location.X) + "/" + strconv.Itoa(w.currentRobot.location.Y)]
+
+					if(safe) {
+
+						// This never happened
+						return
+					}
+
+					// We are off grid; record the fact
+					w.currentRobot.offGrid = true
+
+					// We also gain immunity for this square in the future
+					var void interface{}
+					w.scentPositions[strconv.Itoa(w.currentRobot.location.X) + "/" + strconv.Itoa(w.currentRobot.location.Y)] = void
+
+					// And that's all we need to do for this scenario
+					return
+				}
+
+				// In this scenario, not going off grid, we just update the robot position
+				w.currentRobot.location.X = newPositionX
+				w.currentRobot.location.Y = newPositionY
 		}
 	}
 
@@ -63,15 +96,14 @@ import "strings"
 		// Set up the size of our world
 		newWorld := world{ sizeX: maxX, sizeY: maxY }
 
-		// Set up a first robot
-		newWorld.currentRobot = robot{}
-
 		// Load up the current movements map
 		newWorld.moves = movementMap{}
 
 		// Initialise our slice for safe robot scent squares and used robots
 		newWorld.robots = make([]robot, 0)
-		newWorld.scentPositions = make([]position, 0)
+
+		// This is [string]interface because actually I only want the keys, not the values. And as I don't want the values, actually interface{} takes 0 bytes, so a million interface{} is 0 bytes.
+		newWorld.scentPositions = make(map[string]interface{})
 
 		return newWorld
 	}
