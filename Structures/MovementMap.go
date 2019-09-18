@@ -17,6 +17,22 @@ package Structures
 
 		moveMap := movementMap{}
 
+		// Build up a steadily more complex initialised map structure
+		xyMap := make(map[string]int)
+
+		// Create the middle part
+		actionMap := make(map[string]map[string]int)
+		actionMap["L"] = xyMap
+		actionMap["R"] = xyMap
+		actionMap["F"] = xyMap
+
+		// Now the top part
+		moveMap.movement = make(map[string]map[string]map[string]int)
+		moveMap.movement["N"] = actionMap
+		moveMap.movement["E"] = actionMap
+		moveMap.movement["S"] = actionMap
+		moveMap.movement["W"] = actionMap
+
 		// North
 		moveMap.movement["N"]["L"]["X"] = 0
 		moveMap.movement["N"]["L"]["Y"] = 1
@@ -61,6 +77,13 @@ package Structures
 		moveMap.movement["W"]["F"]["Y"] = 0
 
 		// What happens if we turn?
+		simpleMap := make(map[string]string)
+		moveMap.turn = make(map[string]map[string]string)
+		moveMap.turn["N"] = simpleMap
+		moveMap.turn["E"] = simpleMap
+		moveMap.turn["S"] = simpleMap
+		moveMap.turn["W"] = simpleMap
+
 		moveMap.turn["N"]["L"] = "W"
 		moveMap.turn["N"]["R"] = "E"
 		moveMap.turn["E"]["L"] = "N"

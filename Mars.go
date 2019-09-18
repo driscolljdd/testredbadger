@@ -66,7 +66,7 @@ func main() {
 
 			if(newRobot) {
 
-				parts = strings.Split(line, " ")
+				parts = strings.Split(strings.TrimSpace(line), " ")
 
 				if(len(parts) != 3) {
 
@@ -96,9 +96,21 @@ func main() {
 				continue
 			}
 
-			// If this line is a blank line, end our current robot
-			
+			// If this line is a blank line, indicate our next line will be a 'new robot' one
+			if(len(strings.TrimSpace(line)) < 1) {
+
+				newRobot = true
+				continue
+			}
+
+			// That only leaves a line with a string of commands on it. Pass these to the world for processing
+			runes := []rune(line)
+			for i := 0; i < len(runes) ; i++ {
+
+				flatMarsTheory.Instruction(string(runes[i]))
+			}
 		}
 
-		fmt.Println(lines)
+		// Run a command on the world which basically just gives our output
+		flatMarsTheory.Explore()
 	}

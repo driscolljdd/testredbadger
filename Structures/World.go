@@ -1,6 +1,7 @@
 package Structures
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -17,7 +18,10 @@ import (
 	func (w *world) NewRobot(x, y int, direction string) {
 
 		// Save down the current robot
-		w.robots = append(w.robots, w.currentRobot)
+		if(w.currentRobot.setup) {
+
+			w.robots = append(w.robots, w.currentRobot)
+		}
 
 		// And fetch a new one
 		w.currentRobot = robot{ location:position{ X: x, Y: y}, setup: true, direction: strings.ToUpper(strings.TrimSpace(direction[:1])) }
@@ -91,13 +95,36 @@ import (
 		}
 	}
 
+	// A function to basically wrap up, giving the expected output for the application
+	func (w *world) Explore() {
+
+		// Archive the current robot if it has been used
+		if(w.currentRobot.setup) {
+
+			w.robots = append(w.robots, w.currentRobot)
+		}
+
+		// Flip through the robots, giving us what we need
+		for _, robot := range w.robots {
+
+			var lost string
+
+			if(robot.offGrid) {
+
+				lost = " LOST"
+			}
+
+			fmt.Println(robot.location.X," ",robot.location.Y," ",robot.direction,lost)
+		}
+	}
+
 	func CreateWorld(maxX, maxY int) world {
 
 		// Set up the size of our world
 		newWorld := world{ sizeX: maxX, sizeY: maxY }
 
 		// Load up the current movements map
-		newWorld.moves = movementMap{}
+		newWorld.moves = GetMovementMap()
 
 		// Initialise our slice for safe robot scent squares and used robots
 		newWorld.robots = make([]robot, 0)
