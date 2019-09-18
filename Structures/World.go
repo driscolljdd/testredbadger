@@ -14,13 +14,13 @@ import (
 		moves movementMap
 	}
 
-	func (w *world) NewRobot(x, y int) {
+	func (w *world) NewRobot(x, y int, direction string) {
 
 		// Save down the current robot
 		w.robots = append(w.robots, w.currentRobot)
 
 		// And fetch a new one
-		w.currentRobot = robot{ location:position{ X: x, Y: y}, setup: true }
+		w.currentRobot = robot{ location:position{ X: x, Y: y}, setup: true, direction: strings.ToUpper(strings.TrimSpace(direction[:1])) }
 	}
 
 	func (w *world) Instruction(command string) {
